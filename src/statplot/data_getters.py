@@ -1,7 +1,8 @@
 import json
 from datetime import datetime
-from glob import glob
 from pathlib import Path
+from typing import Optional
+
 from asyncpixel.models import Player
 
 
@@ -22,7 +23,7 @@ class DirTreeIsoJson:
             for path in self.player_dir(uuid).iterdir()
         }
 
-    def get_data(self, path: Path) -> dict:
+    def get_data(self, path: Path) -> Optional[Player]:
         with path.open() as f:
             response = json.load(f)
 
