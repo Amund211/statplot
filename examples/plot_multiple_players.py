@@ -26,11 +26,19 @@ USERNAME_CACHE_PATH = current_dir / "username_cache.json"
 store = DirTreeIsoJson(DATA_DIR)
 
 
+class AllTime:
+    def __getattr__(self, name):
+        return self
+
+    def __int__(self):
+        return 0
+
+
 def div(dividend, divisor):
     if dividend == 0:
         return 0
     elif divisor == 0:
-        return float("inf")
+        return dividend
     else:
         return dividend / divisor
 
@@ -82,7 +90,14 @@ plt.rcParams.update(
 )
 
 
-def plot_single_player(uuid: str, get_stat: Callable[Player, Union[int, float]]):
+def plot_single_player(
+    uuid: str, get_stat: Callable[Player, Union[int, float]], session: bool
+):
+    """
+    Plot the stats of the given player
+
+    If session is True, each base stat will be the increase since the first record
+    """
     files = store.find_files(uuid)
 
     data = {
@@ -91,12 +106,18 @@ def plot_single_player(uuid: str, get_stat: Callable[Player, Union[int, float]])
         if (player := store.get_data(file)) is not None
     }
 
+    if session:
+        session_start = data[min(data.keys())]
+    else:
+        # Mock object that will return 0 for any property so that we get all time stats
+        session_start = AllTime()
+
     date_list = []
     stat_list = []
 
     for date, player in data.items():
         date_list.append(date)
-        stat_list.append(get_stat(player))
+        stat_list.append(get_stat(player, session_start))
 
     username = get_username(uuid, USERNAME_CACHE_PATH)
     (artist,) = plt.plot_date(date_list, stat_list, label=username)
@@ -105,13 +126,23 @@ def plot_single_player(uuid: str, get_stat: Callable[Player, Union[int, float]])
 
 
 GET_STAT_MAP = {
-    "bwfkdr": lambda p: div(p.stats.bedwars.final_kills, p.stats.bedwars.final_deaths),
-    "bwfinals": lambda p: p.stats.bedwars.final_kills,
-    "bwkills": lambda p: p.stats.bedwars.kills,
-    "bwbeds": lambda p: p.stats.bedwars.beds_broken,
-    "bwstars": lambda p: bw_star_from_exp(p.raw["stats"]["Bedwars"]["Experience"]),
-    "bwwlr": lambda p: div(p.stats.bedwars.wins, p.stats.bedwars.losses),
-    "bwwinstreak": lambda p: p.raw["stats"]["Bedwars"]["winstreak"],
+    "bwfkdr": lambda p, q: div(
+        p.stats.bedwars.final_kills - q.stats.bedwars.final_kills,
+        p.stats.bedwars.final_deaths - q.stats.bedwars.final_deaths,
+    ),
+    "bwfinals": lambda p, q: p.stats.bedwars.final_kills - q.stats.bedwars.final_kills,
+    "bwkills": lambda p, q: p.stats.bedwars.kills - q.stats.bedwars.kills,
+    "bwbeds": lambda p, q: p.stats.bedwars.beds_broken - q.stats.bedwars.beds_broken,
+    "bwstars": lambda p, q: bw_star_from_exp(
+        p.raw["stats"]["Bedwars"]["Experience"]
+        - q.raw["stats"]["Bedwars"]["Experience"]
+    ),
+    "bwwlr": lambda p, q: div(
+        p.stats.bedwars.wins - q.stats.bedwars.wins,
+        p.stats.bedwars.losses - q.stats.bedwars.losses,
+    ),
+    "bwwinstreak": lambda p, q: p.raw["stats"]["Bedwars"]["winstreak"]
+    - q.raw["stats"]["Bedwars"]["winstreak"],
 }
 
 TITLE_MAP = {
@@ -128,28 +159,32 @@ assert set(GET_STAT_MAP.keys()) == set(TITLE_MAP.keys())
 
 
 def main():
-    if len(sys.argv) < 2 or (stat_type := sys.argv[1]) not in GET_STAT_MAP:
+    if len(sys.argv) < 2 or (stat_type := sys.argv[1].strip("-")) not in GET_STAT_MAP:
         stat_type_options = "\n\t".join(GET_STAT_MAP.keys())
         print(
-            "You must provide a stat type as the first argument. "
+            "You must provide a stat type as the first argument. Prepend - for session"
             f"One of\n\t{stat_type_options}",
             file=sys.stderr,
         )
         sys.exit(1)
 
+    session = sys.argv[1].startswith("-")
+
     uuids = sys.argv[2:]
     get_stat = GET_STAT_MAP[stat_type]
-    items = [plot_single_player(uuid, get_stat) for uuid in uuids]
+    items = [plot_single_player(uuid, get_stat, session) for uuid in uuids]
     add_heads_to_legend(
         plt.gca(),
         items,
         HEAD_DIR,
         {"pad_width": 2},
     )
-    plt.title(TITLE_MAP[stat_type])
+    plt.title(("Session " if session else "") + TITLE_MAP[stat_type])
     plt.grid()
+
+    filename = f"{'session' if session else ''}_{stat_type}_{'_'.join(uuids)}.png"
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-    plt.savefig(str(IMAGES_DIR / f"{stat_type}_{'_'.join(uuids)}.png"))
+    plt.savefig(str(IMAGES_DIR / filename))
 
 
 if __name__ == "__main__":
