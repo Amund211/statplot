@@ -14,18 +14,25 @@ class DirTreeIsoJson:
     def __init__(self, data_root: Path):
         self.data_root = data_root
 
-    def player_dir(self, uuid: str):
+    def _player_dir(self, uuid: str) -> Path:
+        """Return the directory containing the stats for this player"""
         return self.data_root / uuid
 
-    def find_files(self, uuid: str):
+    def find_files(self, uuid: str) -> dict[datetime, Path]:
+        """Return a dict mapping a timestamp to the statfile for that time"""
         return {
             datetime.fromisoformat(str(path.stem)): path
-            for path in self.player_dir(uuid).iterdir()
+            for path in self._player_dir(uuid).iterdir()
         }
 
     def get_data(self, path: Path) -> Optional[Player]:
-        with path.open() as f:
-            response = json.load(f)
+        """Given the path to a statfile return a Player instance, or None if error"""
+        try:
+            with path.open() as f:
+                response = json.load(f)
+        except Exception:
+            # Handle missing/bad responses
+            return None
 
         if not response["success"]:
             return None
