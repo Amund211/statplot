@@ -11,11 +11,11 @@ class DirTreeIsoJson:
     Store interface for player-data stored like <data_root>/<uuid>/<timestamp>.json
     """
 
-    def __init__(self, data_root: str):
-        self.root_dir = Path(data_root)
+    def __init__(self, data_root: Path):
+        self.data_root = data_root
 
     def player_dir(self, uuid: str):
-        return self.root_dir / uuid
+        return self.data_root / uuid
 
     def find_files(self, uuid: str):
         return {
