@@ -14,13 +14,16 @@ import requests
 from PIL import Image
 
 SESSION_URL = "https://sessionserver.mojang.com/session/minecraft/profile/{uuid}"
-NAME_HISTORY_URL ="https://api.mojang.com/user/profiles/{uuid}/names"
+NAME_HISTORY_URL = "https://api.mojang.com/user/profiles/{uuid}/names"
 
 
-def get_username(uuid: str, username_cache_path: Path)-> str:
+def get_username(uuid: str, username_cache_path: Path) -> str:
     """Get the current username of the user with the given uuid"""
-    with username_cache_path.open("r") as f:
-        username_cache = json.load(f)
+    try:
+        with username_cache_path.open("r") as f:
+            username_cache = json.load(f)
+    except Exception:
+        username_cache = {}
 
     compact_uuid = uuid.replace("-", "")
 
