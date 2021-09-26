@@ -14,6 +14,27 @@ import requests
 from PIL import Image
 
 SESSION_URL = "https://sessionserver.mojang.com/session/minecraft/profile/{uuid}"
+NAME_HISTORY_URL ="https://api.mojang.com/user/profiles/{uuid}/names"
+
+
+def get_username(uuid: str, username_cache_path: Path)-> str:
+    """Get the current username of the user with the given uuid"""
+    with username_cache_path.open("r") as f:
+        username_cache = json.load(f)
+
+    compact_uuid = uuid.replace("-", "")
+
+    if compact_uuid in username_cache:
+        return username_cache[compact_uuid]
+
+    name_history_response = requests.get(NAME_HISTORY_URL.format(uuid=uuid))
+    username = name_history_response.json()[-1]["name"]
+    username_cache[compact_uuid] = username
+
+    with username_cache_path.open("w") as f:
+        json.dump(username_cache, f)
+
+    return username
 
 
 def find_skin_url(session_info: dict) -> Optional[str]:

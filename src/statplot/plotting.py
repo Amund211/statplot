@@ -15,7 +15,7 @@ from matplotlib.legend_handler import HandlerBase
 from matplotlib.pyplot import imread
 from matplotlib.transforms import Bbox, TransformedBbox
 
-from statplot.skins import get_head_path
+from statplot.players import get_head_path
 
 
 class ImageHandler(HandlerBase):
