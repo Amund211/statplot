@@ -15,7 +15,7 @@ from matplotlib.legend_handler import HandlerBase
 from matplotlib.pyplot import imread
 from matplotlib.transforms import Bbox, TransformedBbox
 
-from statplot.players import get_head_path
+from statplot.players import download_head_texture, get_head_path
 
 
 class ImageHandler(HandlerBase):
@@ -79,6 +79,12 @@ def add_heads_to_legend(
     **kwargs,
 ):
     """Given a list of tuples (artist, uuid) add the users head to the legend"""
+    # Ensure we have all the heads we need
+    for _, uuid in items:
+        head_path = get_head_path(head_dir, uuid)
+        if not head_path.is_file():
+            download_head_texture(uuid, head_dir)
+
     axis.legend(
         handler_map={
             artist: ImageHandler(get_head_path(head_dir, uuid), **image_handler_kwargs)
