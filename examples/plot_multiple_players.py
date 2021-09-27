@@ -108,7 +108,8 @@ def bedwars_level_from_exp(exp: int) -> float:
     exp %= PRESTIGE_EXP
 
     # The first few levels have different costs
-    for lvl, cost in EASY_LEVEL_COSTS.items():
+    for i in range(1, EASY_LEVELS + 1):
+        cost = EASY_LEVEL_COSTS[i]
         if exp >= cost:
             levels += 1
             exp -= cost
