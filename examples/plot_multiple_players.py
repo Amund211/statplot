@@ -27,11 +27,47 @@ store = DirTreeIsoJson(DATA_DIR)
 
 
 class AllTime:
+    """
+    Mock object that will return 0 for any nested property
+
+    Pass as reference/baseline to get all time stats
+    """
+
     def __getattr__(self, name):
+        return self
+
+    def __getitem__(self, name):
         return self
 
     def __int__(self):
         return 0
+
+    def __float__(self):
+        return 0.0
+
+    def __sub__(self, other):
+        if isinstance(other, (int, float, AllTime)):
+            return 0 - other
+        else:
+            return NotImplemented
+
+    def __rsub__(self, other):
+        if isinstance(other, (int, float, AllTime)):
+            return other - 0
+        else:
+            return NotImplemented
+
+    def __add__(self, other):
+        if isinstance(other, (int, float, AllTime)):
+            return 0 + other
+        else:
+            return NotImplemented
+
+    def __radd__(self, other):
+        if isinstance(other, (int, float, AllTime)):
+            return other + 0
+        else:
+            return NotImplemented
 
 
 def div(dividend, divisor):
