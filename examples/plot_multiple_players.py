@@ -182,7 +182,7 @@ def main():
     plt.title(("Session " if session else "") + TITLE_MAP[stat_type])
     plt.grid()
 
-    filename = f"{'session' if session else ''}_{stat_type}_{'_'.join(uuids)}.png"
+    filename = f"{'session_' if session else ''}{stat_type}_{'_'.join(uuids)}.png"
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     plt.savefig(str(IMAGES_DIR / filename))
 
