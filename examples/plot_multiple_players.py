@@ -79,31 +79,55 @@ def div(dividend, divisor):
         return dividend / divisor
 
 
-EZLVLCOST = {1: 500, 2: 1000, 3: 2000, 4: 3500}
+# Amount of levels to prestige
+LEVELS_PER_PRESTIGE = 100
 
-EZXP = sum(EZLVLCOST.values())
-EZLVLS = len(EZLVLCOST)
+# The exp required to level up once
+LEVEL_COST = 5000
 
-PRESTIGEXP = EZXP + 96 * 5000
+# The exp required to level up to the first few levels after a prestige
+EASY_LEVEL_COSTS = {1: 500, 2: 1000, 3: 2000, 4: 3500}
+
+# The exp required to level up past the easy levels
+EASY_EXP = sum(EASY_LEVEL_COSTS.values())
+
+# The amount of easy levels
+EASY_LEVELS = len(EASY_LEVEL_COSTS)
+
+# The exp required to prestige
+PRESTIGE_EXP = EASY_EXP + (100 - EASY_LEVELS) * LEVEL_COST
 
 
-def bw_star_from_exp(exp):
-    exp += 500  # You don't have to level up to level 1
-    prestiges = int(exp // PRESTIGEXP)
-    progressxp = int(exp % PRESTIGEXP)
-    if progressxp >= EZXP:
-        progressxp -= EZXP
-        progresslvls = EZLVLS + progressxp // 5000
-        return progresslvls + prestiges * 100
+def bedwars_level_from_exp(exp: int) -> float:
+    """
+    Return the bedwars level corresponding to the given experience
+
+    The fractional part represents the progress towards the next level
+    """
+    levels = (exp // PRESTIGE_EXP) * LEVELS_PER_PRESTIGE
+    exp %= PRESTIGE_EXP
+
+    # The first few levels have different costs
+    for lvl, cost in EASY_LEVEL_COSTS.items():
+        if exp >= cost:
+            levels += 1
+            exp -= cost
+        else:
+            # We can't afford the next level, so we have found the level we are at
+            break
+
+    levels += exp // LEVEL_COST
+    exp %= LEVEL_COST
+
+    next_level = (levels + 1) % LEVELS_PER_PRESTIGE
+
+    # The cost of the next level
+    if next_level in EASY_LEVEL_COSTS:
+        next_level_cost = EASY_LEVEL_COSTS[next_level]
     else:
-        progresslvls = 0
-        for lvl in range(1, EZLVLS + 1):
-            # lvls 1,2,3,4 require different amounts of exp
-            if progressxp >= EZLVLCOST[lvl]:
-                progresslvls += 1
-                progressxp -= EZLVLCOST[lvl]
-            else:
-                return progresslvls + prestiges * 100
+        next_level_cost = LEVEL_COST
+
+    return levels + exp / next_level_cost
 
 
 # Plot params
@@ -169,7 +193,7 @@ GET_STAT_MAP = {
     "bwfinals": lambda p, q: p.stats.bedwars.final_kills - q.stats.bedwars.final_kills,
     "bwkills": lambda p, q: p.stats.bedwars.kills - q.stats.bedwars.kills,
     "bwbeds": lambda p, q: p.stats.bedwars.beds_broken - q.stats.bedwars.beds_broken,
-    "bwstars": lambda p, q: bw_star_from_exp(
+    "bwstars": lambda p, q: bedwars_level_from_exp(
         p.raw["stats"]["Bedwars"]["Experience"]
         - q.raw["stats"]["Bedwars"]["Experience"]
     ),
