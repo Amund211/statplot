@@ -242,6 +242,15 @@ def main():
         loc="upper right",
     )
     plt.title(("Session " if session else "") + TITLE_MAP[stat_type])
+
+    if session:
+        # Ratio session stats can be very high at the start
+        # Tweak the ylims here
+        if stat_type == "bwfkdr":
+            plt.ylim(0, 100)
+        elif stat_type == "bwwlr":
+            plt.ylim(0, 45)
+
     plt.grid()
 
     filename = f"{'session_' if session else ''}{stat_type}_{'_'.join(uuids)}.png"
