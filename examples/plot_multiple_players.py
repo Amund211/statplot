@@ -7,6 +7,7 @@ Usage:
 Run `python3 plot_multiple_players.py` to see a list of all avaliable stat types
 """
 import datetime
+import functools
 import sys
 from pathlib import Path
 from typing import Callable, Union
@@ -267,7 +268,11 @@ def main():
 
     plt.grid()
 
-    filename = f"{'session_' if session else ''}{stat_type}_{'_'.join(uuids)}.png"
+    usernames = map(
+        functools.partial(get_username, username_cache_path=USERNAME_CACHE_PATH), uuids
+    )
+
+    filename = f"{'session_' if session else ''}{stat_type}_{'_'.join(usernames)}.png"
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     plt.savefig(str(IMAGES_DIR / filename))
 
