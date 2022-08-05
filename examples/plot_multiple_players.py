@@ -6,6 +6,7 @@ Usage:
 
 Run `python3 plot_multiple_players.py` to see a list of all avaliable stat types
 """
+import datetime
 import sys
 from pathlib import Path
 from typing import Callable, Union
@@ -152,7 +153,10 @@ plt.rcParams.update(
 
 
 def plot_single_player(
-    uuid: str, get_stat: Callable[Player, Union[int, float]], session: bool
+    uuid: str,
+    get_stat: Callable[Player, Union[int, float]],
+    session: bool,
+    include_time: Callable[datetime.datetime, bool] = lambda d: True,
 ):
     """
     Plot the stats of the given player
@@ -164,7 +168,7 @@ def plot_single_player(
     data = {
         time: player
         for time, file in files.items()
-        if (player := store.get_data(file)) is not None
+        if include_time(time) and (player := store.get_data(file)) is not None
     }
 
     if session:
@@ -220,6 +224,10 @@ assert set(GET_STAT_MAP.keys()) == set(TITLE_MAP.keys())
 
 
 def main():
+    def include_time(time: datetime.datetime) -> bool:
+        """Return True for the dates in the range you want plotted"""
+        return time.year == 2022
+
     if len(sys.argv) < 2 or (stat_type := sys.argv[1].strip("-")) not in GET_STAT_MAP:
         stat_type_options = "\n\t".join(GET_STAT_MAP.keys())
         print(
@@ -230,10 +238,15 @@ def main():
         sys.exit(1)
 
     session = sys.argv[1].startswith("-")
-
     uuids = sys.argv[2:]
+
     get_stat = GET_STAT_MAP[stat_type]
-    items = [plot_single_player(uuid, get_stat, session) for uuid in uuids]
+
+    items = [
+        plot_single_player(uuid, get_stat, session, include_time=include_time)
+        for uuid in uuids
+    ]
+
     add_heads_to_legend(
         plt.gca(),
         items,
@@ -241,6 +254,7 @@ def main():
         {"pad_width": 2},
         loc="upper right",
     )
+
     plt.title(("Session " if session else "") + TITLE_MAP[stat_type])
 
     if session:
