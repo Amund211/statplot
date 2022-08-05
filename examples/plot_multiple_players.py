@@ -239,6 +239,7 @@ def main():
         items,
         HEAD_DIR,
         {"pad_width": 2},
+        loc="upper right",
     )
     plt.title(("Session " if session else "") + TITLE_MAP[stat_type])
     plt.grid()
