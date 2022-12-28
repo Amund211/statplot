@@ -225,9 +225,15 @@ assert set(GET_STAT_MAP.keys()) == set(TITLE_MAP.keys())
 
 
 def main():
+    current_date = datetime.date.today()
+    target_year = current_date.year
+    if current_date.month <= 1:
+        # We probably want stats for last year
+        target_year -= 1
+
     def include_time(time: datetime.datetime) -> bool:
         """Return True for the dates in the range you want plotted"""
-        return time.year == 2022
+        return time.year == target_year
 
     if len(sys.argv) < 2 or (stat_type := sys.argv[1].strip("-")) not in GET_STAT_MAP:
         stat_type_options = "\n\t".join(GET_STAT_MAP.keys())
