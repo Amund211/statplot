@@ -5,5 +5,4 @@ src/*.egg-info/
 examples/downloaded_data/
 examples/heads/
 examples/images/
-examples/sync.sh
 examples/username_cache.json
