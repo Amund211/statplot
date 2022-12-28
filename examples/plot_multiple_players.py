@@ -259,7 +259,10 @@ def main():
         items,
         HEAD_DIR,
         {"pad_width": 2},
-        loc="upper right",
+        # Upper left for most things, except for session ratio stats,
+        # which can be spiky early
+        loc="upper "
+        + ("right" if session and stat_type in ["bwwlr", "bwfkdr"] else "left"),
     )
 
     plt.title(("Session " if session else "") + TITLE_MAP[stat_type])
