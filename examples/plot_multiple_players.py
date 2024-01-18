@@ -281,7 +281,7 @@ def main():
         functools.partial(get_username, username_cache_path=USERNAME_CACHE_PATH), uuids
     )
 
-    filename = f"{'session_' if session else ''}{stat_type}_{'_'.join(usernames)}.png"
+    filename = f"{target_year}_{'session_' if session else ''}{stat_type}_{'_'.join(usernames)}.png"
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     plt.savefig(str(IMAGES_DIR / filename))
 
