@@ -14,7 +14,6 @@ import requests
 from PIL import Image
 
 SESSION_URL = "https://sessionserver.mojang.com/session/minecraft/profile/{uuid}"
-NAME_HISTORY_URL = "https://api.mojang.com/user/profiles/{uuid}/names"
 
 
 def get_username(uuid: str, username_cache_path: Path) -> str:
@@ -30,8 +29,15 @@ def get_username(uuid: str, username_cache_path: Path) -> str:
     if compact_uuid in username_cache:
         return username_cache[compact_uuid]
 
-    name_history_response = requests.get(NAME_HISTORY_URL.format(uuid=uuid))
-    username = name_history_response.json()[-1]["name"]
+    # TODO: Combine this request with the one in download_head_texture
+    session_response = requests.get(SESSION_URL.format(uuid=uuid))
+    try:
+        username = session_response.json()["name"]
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to get username for '{uuid}': "
+            f"{session_response.status_code} {session_response.content}"
+        ) from e
     username_cache[compact_uuid] = username
 
     with username_cache_path.open("w") as f:
